@@ -11,19 +11,37 @@ services:
       - db-data:/var/lib/mysql
     networks:
       - internal
-
- webserver:
-    image: nginx:1.17.4-alpine
-    container_name: webserver
+      
+  drupal1:
+    image: drupal:8.7.8-fpm-alpine
+    container_name: drupal1
     depends_on:
-      - drupal
+      - mysql
     restart: unless-stopped
-    ports:
-      - 80:80
-      - 443:443
+    networks:
+      - internal
+      - external
     volumes:
       - drupal-data:/var/www/html
-      - ./nginx-conf:/etc/nginx/conf.d
-      - certbot-etc:/etc/letsencrypt
+      
+   drupal2:
+    image: drupal:8.7.8-fpm-alpine
+    container_name: drupal2
+    depends_on:
+      - mysql
+    restart: unless-stopped
     networks:
+      - internal
       - external
+    volumes:
+      - drupal-data:/var/www/html
+
+  LoadBalancer:
+  
+    build: ./load-balancer
+    tty: true
+    links: 
+         - drupal1
+         - drupal2
+    ports: 
+         - '8080:8080'
